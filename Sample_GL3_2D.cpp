@@ -208,6 +208,96 @@ float rectangle_rot_dir = 1;
 bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
 
+int cuboidState = 1; // 0 = along x-axis, 1 = along y-axis, 2 = along z-axis
+const float cuboidL = 0.5;
+glm::mat4 rotateCuboid = glm::rotate((float)(0), glm::vec3(0,0,1));
+float cuboidx = 0, cuboidy = 0, cuboidz = 0;
+
+void moveCuboid(int dir) // 0=Left, 1=Right, 2=Up, 3=Down
+{
+	if (dir == 0) // LEFT
+	{
+		rotateCuboid = glm::rotate((float)(90*M_PI/180.0f), glm::vec3(0,0,1)) * rotateCuboid;
+		if (cuboidState == 0) // along x
+		{
+			cuboidState = 1;
+			cuboidx -= (cuboidL + cuboidL/2);
+			cuboidy += cuboidL/2;
+		}
+		else if (cuboidState == 1)
+		{
+			cuboidState = 0;
+			cuboidx -= (cuboidL + cuboidL/2);
+			cuboidy -= cuboidL/2;
+		}
+		else if (cuboidState == 2)
+		{
+			cuboidx -= cuboidL;
+		}
+	}
+	else if (dir == 1) // RIGHT
+	{
+		rotateCuboid = glm::rotate((float)(-90*M_PI/180.0f), glm::vec3(0,0,1)) * rotateCuboid;
+		if (cuboidState == 0)
+		{
+			cuboidState = 1;
+			cuboidx += (cuboidL + cuboidL/2);
+			cuboidy += cuboidL/2;
+		}
+		else if (cuboidState == 1)
+		{
+			cuboidState = 0;
+			cuboidx += (cuboidL + cuboidL/2);
+			cuboidy -= cuboidL/2;
+		}
+		else if (cuboidState == 2)
+		{
+			cuboidx += cuboidL;
+		}
+	}
+	else if (dir == 2) // UP
+	{
+		rotateCuboid = glm::rotate((float)(-90*M_PI/180.0f), glm::vec3(1,0,0)) * rotateCuboid;
+		if (cuboidState == 0)
+		{
+			cuboidz -= cuboidL;
+		}
+		else if (cuboidState == 1)
+		{
+			cuboidState = 2;
+			cuboidz -= (cuboidL + cuboidL/2);
+			cuboidy -= cuboidL/2;
+		}
+		else if (cuboidState == 2)
+		{
+			cuboidState = 1;
+			cuboidz -= (cuboidL + cuboidL/2);
+			cuboidy += cuboidL/2;
+		}
+	}
+	else if (dir == 3) // DOWN
+	{
+		rotateCuboid = glm::rotate((float)(90*M_PI/180.0f), glm::vec3(1,0,0)) * rotateCuboid;
+		if (cuboidState == 0)
+		{
+			cuboidz += cuboidL;
+		}
+		else if (cuboidState == 1)
+		{
+			cuboidState = 2;
+			cuboidz += (cuboidL + cuboidL/2);
+			cuboidy -= cuboidL/2;
+		}
+		else if (cuboidState == 2)
+		{
+			cuboidState = 1;
+			cuboidz += (cuboidL + cuboidL/2);
+			cuboidy += cuboidL/2;
+		}
+	}
+	// cout << cuboidState << endl;
+}
+
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -233,6 +323,18 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 		switch (key) {
 			case GLFW_KEY_ESCAPE:
 				quit(window);
+				break;
+			case GLFW_KEY_LEFT:
+				moveCuboid(0);
+				break;
+			case GLFW_KEY_RIGHT:
+				moveCuboid(1);
+				break;
+			case GLFW_KEY_UP:
+				moveCuboid(2);
+				break;
+			case GLFW_KEY_DOWN:
+				moveCuboid(3);
 				break;
 			default:
 				break;
@@ -355,116 +457,116 @@ void createCuboid()
 {
 	static const GLfloat vertex_buffer_data [] = {
 		// front
-		-0.25, 0.5, 0.25,	// vertex 1
-		0.25, 0.5, 0.25,	// vertex 2
-		-0.25, -0.5, 0.25,	// vertex 4
+		-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
+		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
 
-		0.25, 0.5, 0.25,	// vertex 2
-		-0.25, -0.5, 0.25,	// vertex 4
-		0.25, -0.5, 0.25,	// vertex 3
+		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
 
 		// back
-		-0.25, 0.5, -0.25,	// vertex 5
-		0.25, 0.5, -0.25,	// vertex 6
-		-0.25, -0.5, -0.25,	// vertex 8
+		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
 
-		0.25, 0.5, -0.25,	// vertex 6
-		-0.25, -0.5, -0.25,	// vertex 8
-		0.25, -0.5, -0.25,	// vertex 7
+		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+		cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
 
 		// left
-		-0.25, 0.5, 0.25,	// vertex 1
-		-0.25, 0.5, -0.25,	// vertex 5
-		-0.25, -0.5, 0.25,	// vertex 4
+		-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
+		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
 
-		-0.25, 0.5, -0.25,	// vertex 5
-		-0.25, -0.5, 0.25,	// vertex 4
-		-0.25, -0.5, -0.25,	// vertex 8
+		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
 
 		// right
-		0.25, 0.5, 0.25,	// vertex 2
-		0.25, 0.5, -0.25,	// vertex 6
-		0.25, -0.5, 0.25,	// vertex 3
+		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
 
-		0.25, 0.5, -0.25,	// vertex 6
-		0.25, -0.5, 0.25,	// vertex 3
-		0.25, -0.5, -0.25,	// vertex 7
+		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+		cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
 
 		// top
-		-0.25, 0.5, 0.25,	// vertex 1
-		0.25, 0.5, 0.25,	// vertex 2
-		-0.25, 0.5, -0.25,	// vertex 5
+		-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
+		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
 
-		0.25, 0.5, 0.25,	// vertex 2
-		-0.25, 0.5, -0.25,	// vertex 5
-		0.25, 0.5, -0.25,	// vertex 6
+		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
 
 
 		// bottom
-		-0.25, -0.5, 0.25,	// vertex 4
-		0.25, -0.5, 0.25,	// vertex 3
-		-0.25, -0.5, -0.25,	// vertex 8
+		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
 
-		0.25, -0.5, 0.25,	// vertex 3
-		-0.25, -0.5, -0.25,	// vertex 8
-		0.25, -0.5, -0.25,	// vertex 7
+		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+		cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
 	};
 
 	static const GLfloat color_buffer_data [] = {
-		1,0,0, // color 1
-		0,0,1, // color 2
-		0,1,0, // color 3
-
-		0,1,0, // color 3
-		0.3,0.3,0.3, // color 4
-		1,0,0,  // color 1
-
-		1,0,0, // color 1
-		0,0,1, // color 2
-		0,1,0, // color 3
-
-		0,1,0, // color 3
-		0.3,0.3,0.3, // color 4
-		1,0,0,  // color 1
-
-		1,0,0, // color 1
-		0,0,1, // color 2
-		0,1,0, // color 3
-
-		0,1,0, // color 3
-		0.3,0.3,0.3, // color 4
-		1,0,0,  // color 1
+		0,0,0,
+		0,0,0,
+		0,0,0,
 		
-		1,0,0, // color 1
-		0,0,1, // color 2
-		0,1,0, // color 3
+		0,0,0,
+		0,0,0,
+		0,0,0,
 
-		0,1,0, // color 3
-		0.3,0.3,0.3, // color 4
-		1,0,0,  // color 1
+		1,0,1,
+		1,0,1,
+		1,0,1,
+		
+		1,0,1,
+		1,0,1,
+		1,0,1,
 
-		1,0,0, // color 1
-		0,0,1, // color 2
-		0,1,0, // color 3
+		0,0,1,
+		0,0,1,
+		0,0,1,
 
-		0,1,0, // color 3
-		0.3,0.3,0.3, // color 4
-		1,0,0,  // color 1
+		0,0,1,
+		0,0,1,
+		0,0,1,
 
-		1,0,0, // color 1
-		0,0,1, // color 2
-		0,1,0, // color 3
+		1,1,0,
+		1,1,0,
+		1,1,0,
 
-		0,1,0, // color 3
-		0.3,0.3,0.3, // color 4
-		1,0,0  // color 1
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
 	};
 
 	// create3DObject creates and returns a handle to a VAO that can be used later
-	cuboid = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, color_buffer_data, GL_LINE);
+	cuboid = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, color_buffer_data, GL_FILL);
 }
 
-float camera_rotation_angle = 120;
+float camera_rotation_angle = 90;
 float rectangle_rotation = 0;
 float triangle_rotation = 0;
 
@@ -480,7 +582,8 @@ void draw ()
 	glUseProgram (programID);
 
 	// Eye - Location of camera. Don't change unless you are sure!!
-	glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 2, 5*sin(camera_rotation_angle*M_PI/180.0f) );
+	// glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
+	glm::vec3 eye (1,2,3);
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
 	glm::vec3 target (0, 0, 0);
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
@@ -506,10 +609,9 @@ void draw ()
 	/* Render your scene */
 
 	// CUBOID
-	// glm::mat4 translateCuboid = glm::translate (glm::vec3(-2.0f, 0.0f, 0.0f)); // glTranslatef
-	// glm::mat4 rotateCuboid = glm::rotate((float)(triangle_rotation*M_PI/180.0f), glm::vec3(0,0,1));  // rotate about vector (1,0,0)
-	// glm::mat4 cuboidTransform = translateCuboid * rotateCuboid;
-	// Matrices.model *= cuboidTransform; 
+	glm::mat4 translateCuboid = glm::translate (glm::vec3(cuboidx, cuboidy, cuboidz)); // glTranslatef
+	glm::mat4 cuboidTransform = translateCuboid * rotateCuboid;
+	Matrices.model *= cuboidTransform; 
 	MVP = VP * Matrices.model; // MVP = p * V * M
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	draw3DObject(cuboid);
