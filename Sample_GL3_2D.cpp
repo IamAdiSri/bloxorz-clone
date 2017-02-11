@@ -119,7 +119,7 @@ void quit(GLFWwindow *window)
 {
 	glfwDestroyWindow(window);
 	glfwTerminate();
-	// exit(EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 
@@ -298,7 +298,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
 
-VAO *triangle, *rectangle;
+VAO *triangle, *rectangle, *cuboid;
 
 // Creates the triangle object used in this sample code
 void createTriangle ()
@@ -327,27 +327,141 @@ void createRectangle ()
 {
 	// GL3 accepts only Triangles. Quads are not supported
 	static const GLfloat vertex_buffer_data [] = {
-	-1.2,-1,0, // vertex 1
-	1.2,-1,0, // vertex 2
-	1.2, 1,0, // vertex 3
+		-1.2,-1,0, // vertex 1
+		1.2,-1,0, // vertex 2
+		1.2, 1,0, // vertex 3
 
-	1.2, 1,0, // vertex 3
-	-1.2, 1,0, // vertex 4
-	-1.2,-1,0  // vertex 1
+		1.2, 1,0, // vertex 3
+		-1.2, 1,0, // vertex 4
+		-1.2,-1,0  // vertex 1
 	};
 
 	static const GLfloat color_buffer_data [] = {
-	1,0,0, // color 1
-	0,0,1, // color 2
-	0,1,0, // color 3
+		1,0,0, // color 1
+		0,0,1, // color 2
+		0,1,0, // color 3
 
-	0,1,0, // color 3
-	0.3,0.3,0.3, // color 4
-	1,0,0  // color 1
+		0,1,0, // color 3
+		0.3,0.3,0.3, // color 4
+		1,0,0  // color 1
 	};
 
 	// create3DObject creates and returns a handle to a VAO that can be used later
 	rectangle = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data, color_buffer_data, GL_FILL);
+}
+
+// CUBOID
+void createCuboid()
+{
+	static const GLfloat vertex_buffer_data [] = {
+		// front
+		-0.25, 0.5, 0.25,	// vertex 1
+		0.25, 0.5, 0.25,	// vertex 2
+		-0.25, -0.5, 0.25,	// vertex 4
+
+		0.25, 0.5, 0.25,	// vertex 2
+		-0.25, -0.5, 0.25,	// vertex 4
+		0.25, -0.5, 0.25,	// vertex 3
+
+		// back
+		-0.25, 0.5, -0.25,	// vertex 5
+		0.25, 0.5, -0.25,	// vertex 6
+		-0.25, -0.5, -0.25,	// vertex 8
+
+		0.25, 0.5, -0.25,	// vertex 6
+		-0.25, -0.5, -0.25,	// vertex 8
+		0.25, -0.5, -0.25,	// vertex 7
+
+		// left
+		-0.25, 0.5, 0.25,	// vertex 1
+		-0.25, 0.5, -0.25,	// vertex 5
+		-0.25, -0.5, 0.25,	// vertex 4
+
+		-0.25, 0.5, -0.25,	// vertex 5
+		-0.25, -0.5, 0.25,	// vertex 4
+		-0.25, -0.5, -0.25,	// vertex 8
+
+		// right
+		0.25, 0.5, 0.25,	// vertex 2
+		0.25, 0.5, -0.25,	// vertex 6
+		0.25, -0.5, 0.25,	// vertex 3
+
+		0.25, 0.5, -0.25,	// vertex 6
+		0.25, -0.5, 0.25,	// vertex 3
+		0.25, -0.5, -0.25,	// vertex 7
+
+		// top
+		-0.25, 0.5, 0.25,	// vertex 1
+		0.25, 0.5, 0.25,	// vertex 2
+		-0.25, 0.5, -0.25,	// vertex 5
+
+		0.25, 0.5, 0.25,	// vertex 2
+		-0.25, 0.5, -0.25,	// vertex 5
+		0.25, 0.5, -0.25,	// vertex 6
+
+
+		// bottom
+		-0.25, -0.5, 0.25,	// vertex 4
+		0.25, -0.5, 0.25,	// vertex 3
+		-0.25, -0.5, -0.25,	// vertex 8
+
+		0.25, -0.5, 0.25,	// vertex 3
+		-0.25, -0.5, -0.25,	// vertex 8
+		0.25, -0.5, -0.25,	// vertex 7
+	};
+
+	static const GLfloat color_buffer_data [] = {
+		1,0,0, // color 1
+		0,0,1, // color 2
+		0,1,0, // color 3
+
+		0,1,0, // color 3
+		0.3,0.3,0.3, // color 4
+		1,0,0,  // color 1
+
+		1,0,0, // color 1
+		0,0,1, // color 2
+		0,1,0, // color 3
+
+		0,1,0, // color 3
+		0.3,0.3,0.3, // color 4
+		1,0,0,  // color 1
+
+		1,0,0, // color 1
+		0,0,1, // color 2
+		0,1,0, // color 3
+
+		0,1,0, // color 3
+		0.3,0.3,0.3, // color 4
+		1,0,0,  // color 1
+		
+		1,0,0, // color 1
+		0,0,1, // color 2
+		0,1,0, // color 3
+
+		0,1,0, // color 3
+		0.3,0.3,0.3, // color 4
+		1,0,0,  // color 1
+
+		1,0,0, // color 1
+		0,0,1, // color 2
+		0,1,0, // color 3
+
+		0,1,0, // color 3
+		0.3,0.3,0.3, // color 4
+		1,0,0,  // color 1
+
+		1,0,0, // color 1
+		0,0,1, // color 2
+		0,1,0, // color 3
+
+		0,1,0, // color 3
+		0.3,0.3,0.3, // color 4
+		1,0,0  // color 1
+	};
+
+	// create3DObject creates and returns a handle to a VAO that can be used later
+	cuboid = create3DObject(GL_TRIANGLES, 12, vertex_buffer_data, color_buffer_data, GL_FILL);
 }
 
 float camera_rotation_angle = 90;
@@ -391,6 +505,17 @@ void draw ()
 
 	/* Render your scene */
 
+	// CUBOID
+	// glm::mat4 translateCuboid = glm::translate (glm::vec3(-2.0f, 0.0f, 0.0f)); // glTranslatef
+	// glm::mat4 rotateCuboid = glm::rotate((float)(triangle_rotation*M_PI/180.0f), glm::vec3(0,0,1));  // rotate about vector (1,0,0)
+	// glm::mat4 cuboidTransform = translateCuboid * rotateCuboid;
+	// Matrices.model *= cuboidTransform; 
+	MVP = VP * Matrices.model; // MVP = p * V * M
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	draw3DObject(cuboid);
+	Matrices.model = glm::mat4(1.0f);
+
+	// TRIANGLE (DEFAULT)
 	glm::mat4 translateTriangle = glm::translate (glm::vec3(-2.0f, 0.0f, 0.0f)); // glTranslatef
 	glm::mat4 rotateTriangle = glm::rotate((float)(triangle_rotation*M_PI/180.0f), glm::vec3(0,0,1));  // rotate about vector (1,0,0)
 	glm::mat4 triangleTransform = translateTriangle * rotateTriangle;
@@ -401,7 +526,7 @@ void draw ()
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
 	// draw3DObject draws the VAO given to it using current MVP matrix
-	draw3DObject(triangle);
+	// draw3DObject(triangle);
 
 	// Pop matrix to undo transformations till last push matrix instead of recomputing model matrix
 	// glPopMatrix ();
@@ -414,7 +539,7 @@ void draw ()
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
 	// draw3DObject draws the VAO given to it using current MVP matrix
-	draw3DObject(rectangle);
+	// draw3DObject(rectangle);
 
 	// Increment angles
 	float increments = 1;
@@ -480,6 +605,8 @@ void initGL (GLFWwindow* window, int width, int height)
 	// Create the models
 	createTriangle (); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 	createRectangle ();
+
+	createCuboid();
 	
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
