@@ -210,8 +210,224 @@ bool rectangle_rot_status = true;
 
 int cuboidState = 1; // 0 = along x-axis, 1 = along y-axis, 2 = along z-axis
 const float cuboidL = 0.5;
-glm::mat4 rotateCuboid = glm::rotate((float)(0), glm::vec3(0,0,1));
+glm::mat4 rotateCuboid = glm::mat4(1.0f);
 float cuboidx = 0, cuboidy = 0, cuboidz = 0;
+
+class cuboida {
+	public:
+		int state; // 0 = along x-axis, 1 = along y-axis, 2 = along z-axis
+		static const float side = 0.5;
+		glm::mat4 rotation;
+		float x, y, z; // position of center
+		VAO *cbdobj;
+
+		cuboida()
+		{
+			state = 1;
+			rotation = glm::mat4(1.0f);
+			x = y = z = 0;
+		}
+
+		void create()
+		{
+			static const GLfloat vertex_buffer_data [] = {
+				// front
+				-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
+				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+
+				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+
+				// back
+				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+
+				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+				cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
+
+				// left
+				-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
+				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+
+				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+
+				// right
+				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+
+				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+				cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
+
+				// top
+				-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
+				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+
+				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
+				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+
+
+				// bottom
+				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+
+				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+				cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
+			};
+
+			static const GLfloat color_buffer_data [] = {
+				0,0,0,
+				0,0,0,
+				0,0,0,
+				
+				0,0,0,
+				0,0,0,
+				0,0,0,
+
+				1,0,1,
+				1,0,1,
+				1,0,1,
+				
+				1,0,1,
+				1,0,1,
+				1,0,1,
+
+				0,0,1,
+				0,0,1,
+				0,0,1,
+
+				0,0,1,
+				0,0,1,
+				0,0,1,
+
+				1,1,0,
+				1,1,0,
+				1,1,0,
+
+				1,1,0,
+				1,1,0,
+				1,1,0,
+
+				0,1,1,
+				0,1,1,
+				0,1,1,
+
+				0,1,1,
+				0,1,1,
+				0,1,1,
+
+				1,1,1,
+				1,1,1,
+				1,1,1,
+
+				1,1,1,
+				1,1,1,
+				1,1,1,
+			};
+
+			// create3DObject creates and returns a handle to a VAO that can be used later
+			cbdobj = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, color_buffer_data, GL_FILL);
+		}
+
+		void move(int dir) // 0=Left, 1=Right, 2=Up, 3=Down
+		{
+			if (dir == 0) // LEFT
+			{
+				rotation = glm::rotate((float)(90*M_PI/180.0f), glm::vec3(0,0,1)) * rotation;
+				if (state == 0) // along x
+				{
+					state = 1;
+					x -= (side + side/2);
+					y += side/2;
+				}
+				else if (state == 1)
+				{
+					state = 0;
+					x -= (side + side/2);
+					y -= side/2;
+				}
+				else if (state == 2)
+				{
+					x -= side;
+				}
+			}
+			else if (dir == 1) // RIGHT
+			{
+				rotation = glm::rotate((float)(-90*M_PI/180.0f), glm::vec3(0,0,1)) * rotation;
+				if (state == 0)
+				{
+					state = 1;
+					x += (side + side/2);
+					y += side/2;
+				}
+				else if (state == 1)
+				{
+					state = 0;
+					x += (side + side/2);
+					y -= side/2;
+				}
+				else if (state == 2)
+				{
+					x += side;
+				}
+			}
+			else if (dir == 2) // UP
+			{
+				rotation = glm::rotate((float)(-90*M_PI/180.0f), glm::vec3(1,0,0)) * rotation;
+				if (state == 0)
+				{
+					z -= side;
+				}
+				else if (state == 1)
+				{
+					state = 2;
+					z -= (side + side/2);
+					y -= side/2;
+				}
+				else if (state == 2)
+				{
+					state = 1;
+					z -= (side + side/2);
+					y += side/2;
+				}
+			}
+			else if (dir == 3) // DOWN
+			{
+				rotation = glm::rotate((float)(90*M_PI/180.0f), glm::vec3(1,0,0)) * rotation;
+				if (state == 0)
+				{
+					z += side;
+				}
+				else if (state == 1)
+				{
+					state = 2;
+					z += (side + side/2);
+					y -= side/2;
+				}
+				else if (state == 2)
+				{
+					state = 1;
+					z += (side + side/2);
+					y += side/2;
+				}
+			}
+			// cout << cuboidState << endl;
+		}
+};
+
+cuboida trial;
 
 void moveCuboid(int dir) // 0=Left, 1=Right, 2=Up, 3=Down
 {
@@ -583,7 +799,7 @@ void draw ()
 
 	// Eye - Location of camera. Don't change unless you are sure!!
 	// glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
-	glm::vec3 eye (1,2,3);
+	glm::vec3 eye (4,4,4);
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
 	glm::vec3 target (0, 0, 0);
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
