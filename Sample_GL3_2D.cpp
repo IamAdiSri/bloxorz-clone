@@ -208,20 +208,15 @@ float rectangle_rot_dir = 1;
 bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
 
-int cuboidState = 1; // 0 = along x-axis, 1 = along y-axis, 2 = along z-axis
-const float cuboidL = 0.5;
-glm::mat4 rotateCuboid = glm::mat4(1.0f);
-float cuboidx = 0, cuboidy = 0, cuboidz = 0;
-
-class cuboida {
+class cuboid {
 	public:
 		int state; // 0 = along x-axis, 1 = along y-axis, 2 = along z-axis
 		static const float side = 0.5;
 		glm::mat4 rotation;
 		float x, y, z; // position of center
-		VAO *cbdobj;
+		VAO *obj;
 
-		cuboida()
+		cuboid()
 		{
 			state = 1;
 			rotation = glm::mat4(1.0f);
@@ -232,59 +227,59 @@ class cuboida {
 		{
 			static const GLfloat vertex_buffer_data [] = {
 				// front
-				-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
-				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+				-1*side/2, side, side/2,		// vertex 1
+				side/2, side, side/2,			// vertex 2
+				-1*side/2, -1*side, side/2,	// vertex 4
 
-				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
-				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+				side/2, side, side/2,			// vertex 2
+				-1*side/2, -1*side, side/2,	// vertex 4
+				side/2, -1*side, side/2,		// vertex 3
 
 				// back
-				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
-				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
-				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+				-1*side/2, side, -1*side/2,	// vertex 5
+				side/2, side, -1*side/2,		// vertex 6
+				-1*side/2, -1*side, -1*side/2,	// vertex 8
 
-				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
-				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
-				cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
+				side/2, side, -1*side/2,		// vertex 6
+				-1*side/2, -1*side, -1*side/2,	// vertex 8
+				side/2, -1*side, -1*side/2,	// vertex 7
 
 				// left
-				-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
-				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
-				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
+				-1*side/2, side, side/2,		// vertex 1
+				-1*side/2, side, -1*side/2,	// vertex 5
+				-1*side/2, -1*side, side/2,	// vertex 4
 
-				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
-				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
-				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+				-1*side/2, side, -1*side/2,	// vertex 5
+				-1*side/2, -1*side, side/2,	// vertex 4
+				-1*side/2, -1*side, -1*side/2,	// vertex 8
 
 				// right
-				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
-				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
+				side/2, side, side/2,			// vertex 2
+				side/2, side, -1*side/2,		// vertex 6
+				side/2, -1*side, side/2,		// vertex 3
 
-				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
-				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
-				cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
+				side/2, side, -1*side/2,		// vertex 6
+				side/2, -1*side, side/2,		// vertex 3
+				side/2, -1*side, -1*side/2,	// vertex 7
 
 				// top
-				-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
-				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
+				-1*side/2, side, side/2,		// vertex 1
+				side/2, side, side/2,			// vertex 2
+				-1*side/2, side, -1*side/2,	// vertex 5
 
-				cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-				-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
-				cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
+				side/2, side, side/2,			// vertex 2
+				-1*side/2, side, -1*side/2,	// vertex 5
+				side/2, side, -1*side/2,		// vertex 6
 
 
 				// bottom
-				-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
-				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
-				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
+				-1*side/2, -1*side, side/2,	// vertex 4
+				side/2, -1*side, side/2,		// vertex 3
+				-1*side/2, -1*side, -1*side/2,	// vertex 8
 
-				cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
-				-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
-				cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
+				side/2, -1*side, side/2,		// vertex 3
+				-1*side/2, -1*side, -1*side/2,	// vertex 8
+				side/2, -1*side, -1*side/2,	// vertex 7
 			};
 
 			static const GLfloat color_buffer_data [] = {
@@ -338,7 +333,7 @@ class cuboida {
 			};
 
 			// create3DObject creates and returns a handle to a VAO that can be used later
-			cbdobj = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, color_buffer_data, GL_FILL);
+			obj = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, color_buffer_data, GL_FILL);
 		}
 
 		void move(int dir) // 0=Left, 1=Right, 2=Up, 3=Down
@@ -426,93 +421,7 @@ class cuboida {
 			// cout << cuboidState << endl;
 		}
 };
-
-cuboida trial;
-
-void moveCuboid(int dir) // 0=Left, 1=Right, 2=Up, 3=Down
-{
-	if (dir == 0) // LEFT
-	{
-		rotateCuboid = glm::rotate((float)(90*M_PI/180.0f), glm::vec3(0,0,1)) * rotateCuboid;
-		if (cuboidState == 0) // along x
-		{
-			cuboidState = 1;
-			cuboidx -= (cuboidL + cuboidL/2);
-			cuboidy += cuboidL/2;
-		}
-		else if (cuboidState == 1)
-		{
-			cuboidState = 0;
-			cuboidx -= (cuboidL + cuboidL/2);
-			cuboidy -= cuboidL/2;
-		}
-		else if (cuboidState == 2)
-		{
-			cuboidx -= cuboidL;
-		}
-	}
-	else if (dir == 1) // RIGHT
-	{
-		rotateCuboid = glm::rotate((float)(-90*M_PI/180.0f), glm::vec3(0,0,1)) * rotateCuboid;
-		if (cuboidState == 0)
-		{
-			cuboidState = 1;
-			cuboidx += (cuboidL + cuboidL/2);
-			cuboidy += cuboidL/2;
-		}
-		else if (cuboidState == 1)
-		{
-			cuboidState = 0;
-			cuboidx += (cuboidL + cuboidL/2);
-			cuboidy -= cuboidL/2;
-		}
-		else if (cuboidState == 2)
-		{
-			cuboidx += cuboidL;
-		}
-	}
-	else if (dir == 2) // UP
-	{
-		rotateCuboid = glm::rotate((float)(-90*M_PI/180.0f), glm::vec3(1,0,0)) * rotateCuboid;
-		if (cuboidState == 0)
-		{
-			cuboidz -= cuboidL;
-		}
-		else if (cuboidState == 1)
-		{
-			cuboidState = 2;
-			cuboidz -= (cuboidL + cuboidL/2);
-			cuboidy -= cuboidL/2;
-		}
-		else if (cuboidState == 2)
-		{
-			cuboidState = 1;
-			cuboidz -= (cuboidL + cuboidL/2);
-			cuboidy += cuboidL/2;
-		}
-	}
-	else if (dir == 3) // DOWN
-	{
-		rotateCuboid = glm::rotate((float)(90*M_PI/180.0f), glm::vec3(1,0,0)) * rotateCuboid;
-		if (cuboidState == 0)
-		{
-			cuboidz += cuboidL;
-		}
-		else if (cuboidState == 1)
-		{
-			cuboidState = 2;
-			cuboidz += (cuboidL + cuboidL/2);
-			cuboidy -= cuboidL/2;
-		}
-		else if (cuboidState == 2)
-		{
-			cuboidState = 1;
-			cuboidz += (cuboidL + cuboidL/2);
-			cuboidy += cuboidL/2;
-		}
-	}
-	// cout << cuboidState << endl;
-}
+cuboid piece;
 
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
@@ -541,16 +450,16 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 				quit(window);
 				break;
 			case GLFW_KEY_LEFT:
-				moveCuboid(0);
+				piece.move(0);
 				break;
 			case GLFW_KEY_RIGHT:
-				moveCuboid(1);
+				piece.move(1);
 				break;
 			case GLFW_KEY_UP:
-				moveCuboid(2);
+				piece.move(2);
 				break;
 			case GLFW_KEY_DOWN:
-				moveCuboid(3);
+				piece.move(3);
 				break;
 			default:
 				break;
@@ -616,7 +525,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
 
-VAO *triangle, *rectangle, *cuboid;
+VAO *triangle, *rectangle;
 
 // Creates the triangle object used in this sample code
 void createTriangle ()
@@ -668,120 +577,6 @@ void createRectangle ()
 	rectangle = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data, color_buffer_data, GL_FILL);
 }
 
-// CUBOID
-void createCuboid()
-{
-	static const GLfloat vertex_buffer_data [] = {
-		// front
-		-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
-		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
-
-		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
-		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
-
-		// back
-		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
-		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
-		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
-
-		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
-		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
-		cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
-
-		// left
-		-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
-		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
-		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
-
-		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
-		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
-		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
-
-		// right
-		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
-		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
-
-		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
-		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
-		cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
-
-		// top
-		-1*cuboidL/2, cuboidL, cuboidL/2,		// vertex 1
-		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
-
-		cuboidL/2, cuboidL, cuboidL/2,			// vertex 2
-		-1*cuboidL/2, cuboidL, -1*cuboidL/2,	// vertex 5
-		cuboidL/2, cuboidL, -1*cuboidL/2,		// vertex 6
-
-
-		// bottom
-		-1*cuboidL/2, -1*cuboidL, cuboidL/2,	// vertex 4
-		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
-		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
-
-		cuboidL/2, -1*cuboidL, cuboidL/2,		// vertex 3
-		-1*cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 8
-		cuboidL/2, -1*cuboidL, -1*cuboidL/2,	// vertex 7
-	};
-
-	static const GLfloat color_buffer_data [] = {
-		0,0,0,
-		0,0,0,
-		0,0,0,
-		
-		0,0,0,
-		0,0,0,
-		0,0,0,
-
-		1,0,1,
-		1,0,1,
-		1,0,1,
-		
-		1,0,1,
-		1,0,1,
-		1,0,1,
-
-		0,0,1,
-		0,0,1,
-		0,0,1,
-
-		0,0,1,
-		0,0,1,
-		0,0,1,
-
-		1,1,0,
-		1,1,0,
-		1,1,0,
-
-		1,1,0,
-		1,1,0,
-		1,1,0,
-
-		0,1,1,
-		0,1,1,
-		0,1,1,
-
-		0,1,1,
-		0,1,1,
-		0,1,1,
-
-		1,1,1,
-		1,1,1,
-		1,1,1,
-
-		1,1,1,
-		1,1,1,
-		1,1,1,
-	};
-
-	// create3DObject creates and returns a handle to a VAO that can be used later
-	cuboid = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, color_buffer_data, GL_FILL);
-}
-
 float camera_rotation_angle = 90;
 float rectangle_rotation = 0;
 float triangle_rotation = 0;
@@ -825,12 +620,12 @@ void draw ()
 	/* Render your scene */
 
 	// CUBOID
-	glm::mat4 translateCuboid = glm::translate (glm::vec3(cuboidx, cuboidy, cuboidz)); // glTranslatef
-	glm::mat4 cuboidTransform = translateCuboid * rotateCuboid;
+	glm::mat4 translateCuboid = glm::translate (glm::vec3(piece.x, piece.y, piece.z)); // glTranslatef
+	glm::mat4 cuboidTransform = translateCuboid * piece.rotation;
 	Matrices.model *= cuboidTransform; 
 	MVP = VP * Matrices.model; // MVP = p * V * M
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(cuboid);
+	draw3DObject(piece.obj);
 	Matrices.model = glm::mat4(1.0f);
 
 	// TRIANGLE (DEFAULT)
@@ -924,7 +719,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	createTriangle (); // Generate the VAO, VBOs, vertices data & copy into the array buffer
 	createRectangle ();
 
-	createCuboid();
+	piece.create();
 	
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
