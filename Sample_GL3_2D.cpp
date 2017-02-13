@@ -215,13 +215,19 @@ class cuboid {
 		int state; // 0 = along x-axis, 1 = along y-axis, 2 = along z-axis
 		glm::mat4 rotation;
 		float x, y, z; // position of center
+		float one_x, one_y, one_z; //one and two refer to the centers of two cubes that make up the cuboid
+		float two_x, two_y, two_z;
+		int moves;
 		VAO *obj;
 
 		cuboid()
 		{
 			state = 1;
 			rotation = glm::mat4(1.0f);
-			x = y = z = 0;
+			x = y = z = one_x = one_z = two_x = two_z = 0;
+			one_y = -1*side/2;
+			two_y = side/2;
+			moves = 0;
 		}
 
 		void create()
@@ -339,6 +345,7 @@ class cuboid {
 
 		void move(int dir) // 0=Left, 1=Right, 2=Up, 3=Down
 		{
+			score++;
 			if (dir == 0) // LEFT
 			{
 				rotation = glm::rotate((float)(90*M_PI/180.0f), glm::vec3(0,0,1)) * rotation;
@@ -419,34 +426,66 @@ class cuboid {
 					y += side/2;
 				}
 			}
+
+			if (state == 0) // along x
+			{
+				one_x = x - side/2;
+				two_x = x + side/2;
+
+				one_y = two_y = y;
+
+				one_z = two_z = z;
+			}
+			else if (state == 1) // along y
+			{
+				one_x = two_x = x;
+
+				one_y = y + side/2;
+				two_y = y - side/2;
+
+				one_z = two_z = z;
+			}
+			else if (state == 2) // along z
+			{
+				one_x = two_x = x;
+
+				one_y = two_y = y;
+
+				one_z = z + side/2;
+				two_z = z - side/2;
+			}
 			// cout << cuboidState << endl;
 		}
 };
 cuboid piece;
 
-const int map_center_i = 4;
-const int map_center_j = 4;
+int mapInd = 0;
+const int map_center_i = 5;
+const int map_center_j = 5;
 const int max_map_size = 10;
+const int max_maps = 1;
 
 // -1 indicates where the brick starts
-const int maps[1][10][10] =
+const int maps[max_maps][max_map_size][max_map_size] =
 {
 	{
 		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{ 0, 0, 0, 0, 0, 0, 1, 1, 1, 1},
-		{ 1, 1, 1, 1, 0, 0, 1, 1, 6, 1},
-		{ 1, 1, 5, 1, 0, 0, 1, 1, 1, 1},
+		{ 1, 1, 1, 1, 0, 0, 1, 1, 5, 1},
+		{ 1, 1, 4, 1, 0, 0, 1, 1, 1, 1},
 		{ 1, 1, 1, 1, 0, 0, 1, 1, 1, 1},
-		{ 1,-1, 1, 1, 4, 4, 1, 1, 1, 1},
+		{ 1,-1, 1, 1, 3, 3, 1, 1, 1, 1},
 		{ 1, 1, 1, 1, 0, 0, 1, 1, 1, 1},
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{ 2, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	},
 };
 
 // first two numbers indicate switch indices; the rest pairwise tell the bridge indices
-const int switches[1][2][10] =
+const int max_switches = 2;
+const int max_switch_size = 10;
+const int switches[max_maps][max_switches][max_switch_size] =
 {
 	{
 		{ 4, 2, 6, 4, 6, 5,-1,-1,-1,-1},
@@ -457,11 +496,12 @@ const int switches[1][2][10] =
 class tiles {
 	public:
 		int state; //  0 = vacant, 1 = occupied
-		int type; // 1 = regular, 2 = fragile, 3 = bridge_on, 4 = bridge_off, 5 = switch, 6 = goal
+		int type; // 1 = regular, 2 = fragile, 3 = bridge, 4 = switch, 5 = goal
 		int i, j;
 		float x, y, z;
+		int show;
 
-		tiles(float a, float b, float c) // map matrix coordinates, type
+		tiles(int a, int b, int c) // map matrix coordinates, type
 		{
 			i = a;
 			j = b;
@@ -470,12 +510,16 @@ class tiles {
 			y = -1*(side + side/10);
 			z = -1*(j - map_center_j)*side;
 
+			show = 1;
+			if(c == 3)
+				show = 0;
+
 			type = c;
 		}
 };
 vector<tiles> grid;
 
-void init_grid(int mapInd)
+void init_grid()
 {
 	while(grid.size() > 0)
     {
@@ -491,8 +535,15 @@ void init_grid(int mapInd)
 				{
 					tiles tile(i, j, 1);
 					tile.state = 1;
+					
 					piece.x = (i - map_center_i) * side;
 					piece.z = -1*(j - map_center_j) * side;
+					piece.one_x = piece.two_x = piece.x;
+					piece.one_y = piece.y + side/2;
+					piece.two_y = piece.y - side/2;
+					piece.one_z = piece.two_z = piece.z;
+
+					cout << (tile.x == piece.x) << " " << (tile.z == piece.z) << endl;
 					grid.push_back(tile);
 				}
 				else
@@ -500,6 +551,41 @@ void init_grid(int mapInd)
 					tiles tile(i, j, maps[mapInd][i][j]);
 					tile.state = 0;
 					grid.push_back(tile);
+				}
+			}
+		}
+	}
+}
+
+bool is_occupied(int cube, float x, float z)
+{
+	if (cube == 1)
+		if (piece.one_x == x)
+			if (piece.one_z == z)
+				return true;
+	
+	if (cube == 2)
+		if (piece.two_x == x)
+			if (piece.two_z == z)
+				return true;
+
+	return false;	
+}
+
+void toggle_bridge(int i, int j)
+{
+	for(int a = 0; a < max_switches; a++)
+	{
+		if(switches[mapInd][a][0] == i && switches[mapInd][a][1] == j)
+		{
+			for(int b = 2; b < max_switch_size; b+=2)
+			{
+				for(int c = 0; c < grid.size(); c++)
+				{
+					if(grid[c].i == switches[mapInd][a][b] && grid[c].j == switches[mapInd][a][b + 1])
+					{
+						grid[c].show = !grid[c].show;
+					}
 				}
 			}
 		}
@@ -609,7 +695,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 }
 
 VAO *triangle, *rectangle;
-VAO *reg, *frag, *bron, *broff, *swch;
+VAO *reg, *frag, *bridge, *swch;
 
 // Creates the triangle object used in this sample code
 void createTriangle ()
@@ -821,57 +907,7 @@ void createTiles()
 		1,1,1,
 	};
 
-	static const GLfloat bron_color_buffer_data [] = {
-		0,0,0,
-		0,0,0,
-		0,0,0,
-		
-		0,0,0,
-		0,0,0,
-		0,0,0,
-
-		1,0,1,
-		1,0,1,
-		1,0,1,
-		
-		1,0,1,
-		1,0,1,
-		1,0,1,
-
-		0,0,1,
-		0,0,1,
-		0,0,1,
-
-		0,0,1,
-		0,0,1,
-		0,0,1,
-
-		1,1,0,
-		1,1,0,
-		1,1,0,
-
-		1,1,0,
-		1,1,0,
-		1,1,0,
-
-		0,1,1,
-		0,1,1,
-		0,1,1,
-
-		0,1,1,
-		0,1,1,
-		0,1,1,
-
-		1,1,1,
-		1,1,1,
-		1,1,1,
-
-		1,1,1,
-		1,1,1,
-		1,1,1,
-	};
-
-	static const GLfloat broff_color_buffer_data [] = {
+	static const GLfloat bridge_color_buffer_data [] = {
 		0,0,0,
 		0,0,0,
 		0,0,0,
@@ -974,8 +1010,7 @@ void createTiles()
 	// create3DObject creates and returns a handle to a VAO that can be used later
 	reg = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, reg_color_buffer_data, GL_FILL);
 	frag = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, frag_color_buffer_data, GL_FILL);
-	bron = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, bron_color_buffer_data, GL_FILL);
-	broff = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, broff_color_buffer_data, GL_FILL);
+	bridge = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, bridge_color_buffer_data, GL_FILL);
 	swch = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, swch_color_buffer_data, GL_FILL);
 }
 
@@ -1031,6 +1066,7 @@ void draw ()
 	Matrices.model = glm::mat4(1.0f);
 
 	// GRID
+	bool off_grid_1 = true, off_grid_2 = true;
 	for(int i = 0; i < grid.size(); i++)
 	{
 		glm::mat4 translateTile = glm::translate (glm::vec3(grid[i].x, grid[i].y, grid[i].z)); // glTranslatef
@@ -1038,8 +1074,60 @@ void draw ()
 		Matrices.model *= tileTransform; 
 		MVP = VP * Matrices.model; // MVP = p * V * M
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		draw3DObject(reg);
+
+		bool occupied1 = is_occupied(1, grid[i].x, grid[i].z);
+		bool occupied2 = is_occupied(2, grid[i].x, grid[i].z);
+		
+		if(occupied1)
+			off_grid_1 = false;
+		if(occupied2)
+			off_grid_2 = false;
+
+		switch(grid[i].type) {
+			case 1: // regular tile
+				grid[i].state = (occupied1 || occupied2);
+				draw3DObject(reg);
+				break;
+			case 2: // fragile
+				grid[i].state = (occupied1 || occupied2);
+				if (occupied1 && occupied2) // breaking condition
+				{
+					off_grid_1 = off_grid_2 = true;
+					cout << "fragile tile broken" << endl;
+				}
+				else
+					draw3DObject(frag);
+				break;
+			case 3: // bridge
+				grid[i].state = (occupied1 || occupied2);
+				if (grid[i].show == 1)
+					draw3DObject(bridge);
+				if (grid[i].state == 1 && grid[i].show == 0)
+					off_grid_1 = off_grid_2 = true;
+				break;
+			case 4: // switch
+				if (occupied1 || occupied2)
+				{
+					if(grid[i].state == 0)
+						toggle_bridge(grid[i].i, grid[i].j);
+				}
+				grid[i].state = (occupied1 || occupied2);
+				draw3DObject(swch);
+				break;
+			case 5: // goal
+				grid[i].state = (occupied1 || occupied2);
+				if (occupied1 && occupied2)
+					cout << "goal" << endl;
+				break;
+			default:
+				break;
+		}
 		Matrices.model = glm::mat4(1.0f);
+	}
+
+	if (off_grid_1 || off_grid_2)
+	{
+		cout << "OFF GRID!" << endl;
 	}
 
 	// TRIANGLE (DEFAULT)
@@ -1136,7 +1224,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	piece.create();
 	createTiles();
 
-	init_grid(0);
+	init_grid();
 	
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
