@@ -208,10 +208,11 @@ float rectangle_rot_dir = 1;
 bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
 
+const float side = 0.5;
+
 class cuboid {
 	public:
 		int state; // 0 = along x-axis, 1 = along y-axis, 2 = along z-axis
-		static const float side = 0.5;
 		glm::mat4 rotation;
 		float x, y, z; // position of center
 		VAO *obj;
@@ -423,6 +424,88 @@ class cuboid {
 };
 cuboid piece;
 
+const int map_center_i = 4;
+const int map_center_j = 4;
+const int max_map_size = 10;
+
+// -1 indicates where the brick starts
+const int maps[1][10][10] =
+{
+	{
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{ 0, 0, 0, 0, 0, 0, 1, 1, 1, 1},
+		{ 1, 1, 1, 1, 0, 0, 1, 1, 6, 1},
+		{ 1, 1, 5, 1, 0, 0, 1, 1, 1, 1},
+		{ 1, 1, 1, 1, 0, 0, 1, 1, 1, 1},
+		{ 1,-1, 1, 1, 4, 4, 1, 1, 1, 1},
+		{ 1, 1, 1, 1, 0, 0, 1, 1, 1, 1},
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	},
+};
+
+// first two numbers indicate switch indices; the rest pairwise tell the bridge indices
+const int switches[1][2][10] =
+{
+	{
+		{ 4, 2, 6, 4, 6, 5,-1,-1,-1,-1},
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+	}
+};
+
+class tiles {
+	public:
+		int state; //  0 = vacant, 1 = occupied
+		int type; // 1 = regular, 2 = fragile, 3 = bridge_on, 4 = bridge_off, 5 = switch, 6 = goal
+		int i, j;
+		float x, y, z;
+
+		tiles(float a, float b, float c) // map matrix coordinates, type
+		{
+			i = a;
+			j = b;
+
+			x = (i - map_center_i)*side;
+			y = -1*(side + side/10);
+			z = -1*(j - map_center_j)*side;
+
+			type = c;
+		}
+};
+vector<tiles> grid;
+
+void init_grid(int mapInd)
+{
+	while(grid.size() > 0)
+    {
+        grid.erase(grid.begin());
+    }
+	for(int i = 0; i < max_map_size; i++)
+	{
+		for(int j= 0; j < max_map_size; j++)
+		{
+			if (maps[mapInd][i][j] != 0)
+			{
+				if (maps[mapInd][i][j] == -1)
+				{
+					tiles tile(i, j, 1);
+					tile.state = 1;
+					piece.x = (i - map_center_i) * side;
+					piece.z = -1*(j - map_center_j) * side;
+					grid.push_back(tile);
+				}
+				else
+				{
+					tiles tile(i, j, maps[mapInd][i][j]);
+					tile.state = 0;
+					grid.push_back(tile);
+				}
+			}
+		}
+	}
+}
+
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -526,6 +609,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 }
 
 VAO *triangle, *rectangle;
+VAO *reg, *frag, *bron, *broff, *swch;
 
 // Creates the triangle object used in this sample code
 void createTriangle ()
@@ -575,6 +659,324 @@ void createRectangle ()
 
 	// create3DObject creates and returns a handle to a VAO that can be used later
 	rectangle = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data, color_buffer_data, GL_FILL);
+}
+
+// creates the tile objects
+void createTiles()
+{
+	static const GLfloat vertex_buffer_data [] = {
+		// front
+		-1*side/2, side/10, side/2,		// vertex 1
+		side/2, side/10, side/2,			// vertex 2
+		-1*side/2, -1*side/10, side/2,	// vertex 4
+
+		side/2, side/10, side/2,			// vertex 2
+		-1*side/2, -1*side/10, side/2,	// vertex 4
+		side/2, -1*side/10, side/2,		// vertex 3
+
+		// back
+		-1*side/2, side/10, -1*side/2,	// vertex 5
+		side/2, side/10, -1*side/2,		// vertex 6
+		-1*side/2, -1*side/10, -1*side/2,	// vertex 8
+
+		side/2, side/10, -1*side/2,		// vertex 6
+		-1*side/2, -1*side/10, -1*side/2,	// vertex 8
+		side/2, -1*side/10, -1*side/2,	// vertex 7
+
+		// left
+		-1*side/2, side/10, side/2,		// vertex 1
+		-1*side/2, side/10, -1*side/2,	// vertex 5
+		-1*side/2, -1*side/10, side/2,	// vertex 4
+
+		-1*side/2, side/10, -1*side/2,	// vertex 5
+		-1*side/2, -1*side/10, side/2,	// vertex 4
+		-1*side/2, -1*side/10, -1*side/2,	// vertex 8
+
+		// right
+		side/2, side/10, side/2,			// vertex 2
+		side/2, side/10, -1*side/2,		// vertex 6
+		side/2, -1*side/10, side/2,		// vertex 3
+
+		side/2, side/10, -1*side/2,		// vertex 6
+		side/2, -1*side/10, side/2,		// vertex 3
+		side/2, -1*side/10, -1*side/2,	// vertex 7
+
+		// top
+		-1*side/2, side/10, side/2,		// vertex 1
+		side/2, side/10, side/2,			// vertex 2
+		-1*side/2, side/10, -1*side/2,	// vertex 5
+
+		side/2, side/10, side/2,			// vertex 2
+		-1*side/2, side/10, -1*side/2,	// vertex 5
+		side/2, side/10, -1*side/2,		// vertex 6
+
+
+		// bottom
+		-1*side/2, -1*side/10, side/2,	// vertex 4
+		side/2, -1*side/10, side/2,		// vertex 3
+		-1*side/2, -1*side/10, -1*side/2,	// vertex 8
+
+		side/2, -1*side/10, side/2,		// vertex 3
+		-1*side/2, -1*side/10, -1*side/2,	// vertex 8
+		side/2, -1*side/10, -1*side/2,	// vertex 7
+	};
+
+	static const GLfloat reg_color_buffer_data [] = {
+		0,0,0,
+		0,0,0,
+		0,0,0,
+		
+		0,0,0,
+		0,0,0,
+		0,0,0,
+
+		1,0,1,
+		1,0,1,
+		1,0,1,
+		
+		1,0,1,
+		1,0,1,
+		1,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+	};
+
+	static const GLfloat frag_color_buffer_data [] = {
+		0,0,0,
+		0,0,0,
+		0,0,0,
+		
+		0,0,0,
+		0,0,0,
+		0,0,0,
+
+		1,0,1,
+		1,0,1,
+		1,0,1,
+		
+		1,0,1,
+		1,0,1,
+		1,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+	};
+
+	static const GLfloat bron_color_buffer_data [] = {
+		0,0,0,
+		0,0,0,
+		0,0,0,
+		
+		0,0,0,
+		0,0,0,
+		0,0,0,
+
+		1,0,1,
+		1,0,1,
+		1,0,1,
+		
+		1,0,1,
+		1,0,1,
+		1,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+	};
+
+	static const GLfloat broff_color_buffer_data [] = {
+		0,0,0,
+		0,0,0,
+		0,0,0,
+		
+		0,0,0,
+		0,0,0,
+		0,0,0,
+
+		1,0,1,
+		1,0,1,
+		1,0,1,
+		
+		1,0,1,
+		1,0,1,
+		1,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+	};
+
+	static const GLfloat swch_color_buffer_data [] = {
+		0,0,0,
+		0,0,0,
+		0,0,0,
+		
+		0,0,0,
+		0,0,0,
+		0,0,0,
+
+		1,0,1,
+		1,0,1,
+		1,0,1,
+		
+		1,0,1,
+		1,0,1,
+		1,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		0,0,1,
+		0,0,1,
+		0,0,1,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		1,1,0,
+		1,1,0,
+		1,1,0,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		0,1,1,
+		0,1,1,
+		0,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+
+		1,1,1,
+		1,1,1,
+		1,1,1,
+	};
+
+	// create3DObject creates and returns a handle to a VAO that can be used later
+	reg = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, reg_color_buffer_data, GL_FILL);
+	frag = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, frag_color_buffer_data, GL_FILL);
+	bron = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, bron_color_buffer_data, GL_FILL);
+	broff = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, broff_color_buffer_data, GL_FILL);
+	swch = create3DObject(GL_TRIANGLES, 12*3, vertex_buffer_data, swch_color_buffer_data, GL_FILL);
 }
 
 float camera_rotation_angle = 90;
@@ -627,6 +1029,18 @@ void draw ()
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	draw3DObject(piece.obj);
 	Matrices.model = glm::mat4(1.0f);
+
+	// GRID
+	for(int i = 0; i < grid.size(); i++)
+	{
+		glm::mat4 translateTile = glm::translate (glm::vec3(grid[i].x, grid[i].y, grid[i].z)); // glTranslatef
+		glm::mat4 tileTransform = translateTile;
+		Matrices.model *= tileTransform; 
+		MVP = VP * Matrices.model; // MVP = p * V * M
+		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		draw3DObject(reg);
+		Matrices.model = glm::mat4(1.0f);
+	}
 
 	// TRIANGLE (DEFAULT)
 	glm::mat4 translateTriangle = glm::translate (glm::vec3(-2.0f, 0.0f, 0.0f)); // glTranslatef
@@ -720,6 +1134,9 @@ void initGL (GLFWwindow* window, int width, int height)
 	createRectangle ();
 
 	piece.create();
+	createTiles();
+
+	init_grid(0);
 	
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
