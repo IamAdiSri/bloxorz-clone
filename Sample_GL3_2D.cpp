@@ -209,6 +209,9 @@ bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
 
 const float side = 0.5;
+int game_progress; // -1 = lost; 0 = in progress, 1 = won
+bool take_action = false;
+int last_move = -1;
 
 class cuboid {
 	public:
@@ -345,7 +348,10 @@ class cuboid {
 
 		void move(int dir) // 0=Left, 1=Right, 2=Up, 3=Down
 		{
-			score++;
+			last_move = dir;
+			if(game_progress != 0)
+				return;
+			moves++;
 			if (dir == 0) // LEFT
 			{
 				rotation = glm::rotate((float)(90*M_PI/180.0f), glm::vec3(0,0,1)) * rotation;
@@ -463,7 +469,7 @@ int mapInd = 0;
 const int map_center_i = 5;
 const int map_center_j = 5;
 const int max_map_size = 10;
-const int max_maps = 1;
+const int max_maps = 2;
 
 // -1 indicates where the brick starts
 const int maps[max_maps][max_map_size][max_map_size] =
@@ -480,6 +486,18 @@ const int maps[max_maps][max_map_size][max_map_size] =
 		{ 2, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	},
+	{
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{ 0, 0, 0, 0, 0, 0, 1, 1, 1, 1},
+		{ 1, 1, 1, 1, 0, 0, 1, 1, 5, 1},
+		{ 1, 1, 4, 1, 0, 0, 1, 1, 1, 1},
+		{ 1, 1, 1, 1, 0, 0, 1, 1, 1, 1},
+		{ 1,-1, 1, 1, 3, 3, 1, 1, 1, 1},
+		{ 1, 1, 1, 1, 0, 0, 1, 1, 1, 1},
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	},
 };
 
 // first two numbers indicate switch indices; the rest pairwise tell the bridge indices
@@ -490,7 +508,11 @@ const int switches[max_maps][max_switches][max_switch_size] =
 	{
 		{ 4, 2, 6, 4, 6, 5,-1,-1,-1,-1},
 		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-	}
+	},
+	{
+		{ 4, 2, 6, 4, 6, 5,-1,-1,-1,-1},
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+	},
 };
 
 class tiles {
@@ -521,6 +543,9 @@ vector<tiles> grid;
 
 void init_grid()
 {
+	game_progress = 0;
+	take_action = false;
+
 	while(grid.size() > 0)
     {
         grid.erase(grid.begin());
@@ -537,13 +562,16 @@ void init_grid()
 					tile.state = 1;
 					
 					piece.x = (i - map_center_i) * side;
+					piece.y = 0;
 					piece.z = -1*(j - map_center_j) * side;
 					piece.one_x = piece.two_x = piece.x;
 					piece.one_y = piece.y + side/2;
 					piece.two_y = piece.y - side/2;
 					piece.one_z = piece.two_z = piece.z;
+					piece.rotation = glm::mat4(1.0f);
+					piece.state = 1;
 
-					cout << (tile.x == piece.x) << " " << (tile.z == piece.z) << endl;
+					// cout << (tile.x == piece.x) << " " << (tile.z == piece.z) << endl;
 					grid.push_back(tile);
 				}
 				else
@@ -592,16 +620,60 @@ void toggle_bridge(int i, int j)
 	}
 }
 
+float eye_x = 4, eye_y = 4, eye_z = 4;
+float target_x = 0, target_y = 0, target_z = 0;
+float up_x = 0, up_y = 1, up_z = 0;
+
+// Eye - Location of camera. Don't change unless you are sure!!
+// glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
+glm::vec3 eye (4, 4, 4);
+// Target - Where is the camera looking at.  Don't change unless you are sure!!
+glm::vec3 target (0, 0, 0);
+// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
+glm::vec3 up (0, 1, 0);
+
+int view_mode = 0;
+void change_camera()
+{
+	// cout << view_mode << endl;
+	switch(view_mode) {
+		case 0: // Tower view
+			eye[0] = 4;
+			eye[1] = 4;
+			eye[2] = 4;
+			break;
+		case 1: // Top view
+			eye[0] = eye[2] = 0.1;
+			eye[1] = 4;
+			break;
+		case 2: // Block view
+			eye[0] = piece.x;
+			eye[1] = piece.y;
+			eye[2] = piece.z;
+
+			target = piece.rotation * target;
+			break;
+		case 3:
+			// Follow view
+			break;
+		case 4:
+			// Helicopter view
+			break;
+		default:
+			break;
+	}
+}
+
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	 // Function is called first on GLFW_PRESS.
-
 	if (action == GLFW_RELEASE) {
 		switch (key) {
 			case GLFW_KEY_C:
 				rectangle_rot_status = !rectangle_rot_status;
+				view_mode = (view_mode + 1) % 5;
 				break;
 			case GLFW_KEY_P:
 				triangle_rot_status = !triangle_rot_status;
@@ -609,12 +681,27 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 			case GLFW_KEY_X:
 				// do something ..
 				break;
+			case GLFW_KEY_R:
+				if(mapInd != max_maps)
+					init_grid();
+			case GLFW_KEY_N:
+				if(mapInd+1 != max_maps && game_progress == 1)
+				{
+					mapInd++;
+					init_grid();
+				}
+				break;
 			default:
 				break;
 		}
 	}
 	else if (action == GLFW_PRESS) {
 		switch (key) {
+			case GLFW_KEY_ENTER:
+				mapInd = 0;
+				piece.moves = 0;
+				init_grid();
+				break;
 			case GLFW_KEY_ESCAPE:
 				quit(window);
 				break;
@@ -1018,6 +1105,41 @@ float camera_rotation_angle = 90;
 float rectangle_rotation = 0;
 float triangle_rotation = 0;
 
+float fall_speed;
+const float gravity = 10;
+
+void init_game()
+{
+	fall_speed = 300;
+	if(game_progress == 1)
+	{
+		// mapInd++;
+		if(mapInd+1 >= max_maps)
+		{
+			cout << "All Levels Completed!" << endl;
+			cout << "Total moves used: " << piece.moves << endl;
+			cout << "Press ENTER to play from Level 1, or press Q to quit" << endl;
+		}
+		else
+		{
+			cout << "LEVEL PASSED!" << endl;
+			cout << "Total moves used: " << piece.moves << endl;
+			cout << "Press N to  go to next level, press ENTER to play from Level 1, or press Q to quit" << endl;
+		}
+	}
+	else if(game_progress == -1)
+	{
+		cout << "LEVEL FAILED!" << endl;
+		cout << "Total moves used: " << piece.moves << endl;
+		cout << "Press R to repeat current level, press ENTER to play from Level 1, or press Q to quit" << endl;
+	}
+	else
+	{
+		game_progress = 0;
+		init_grid();
+	}
+}
+
 /* Render the scene with openGL */
 /* Edit this function according to your assignment */
 void draw ()
@@ -1029,15 +1151,8 @@ void draw ()
 	// Don't change unless you know what you are doing
 	glUseProgram (programID);
 
-	// Eye - Location of camera. Don't change unless you are sure!!
-	// glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
-	glm::vec3 eye (4,4,4);
-	// Target - Where is the camera looking at.  Don't change unless you are sure!!
-	glm::vec3 target (0, 0, 0);
-	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-	glm::vec3 up (0, 1, 0);
-
 	// Compute Camera matrix (view)
+	change_camera();
 	Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
 	//  Don't change unless you are sure!!
 	// Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
@@ -1056,13 +1171,31 @@ void draw ()
 
 	/* Render your scene */
 
+	if(game_progress != 0)
+	{
+		if(piece.y < -8)
+		{
+			if(!take_action)
+			{
+				take_action = true;
+				init_game();
+			}
+		}
+		else
+		{
+			fall_speed += gravity*0.5;
+			piece.y -= (fall_speed + (gravity)*0.5*0.5/2)/10000;
+		}
+	}
+
 	// CUBOID
 	glm::mat4 translateCuboid = glm::translate (glm::vec3(piece.x, piece.y, piece.z)); // glTranslatef
 	glm::mat4 cuboidTransform = translateCuboid * piece.rotation;
 	Matrices.model *= cuboidTransform; 
 	MVP = VP * Matrices.model; // MVP = p * V * M
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(piece.obj);
+	if(game_progress == 0 || !take_action)
+		draw3DObject(piece.obj);
 	Matrices.model = glm::mat4(1.0f);
 
 	// GRID
@@ -1093,7 +1226,7 @@ void draw ()
 				if (occupied1 && occupied2) // breaking condition
 				{
 					off_grid_1 = off_grid_2 = true;
-					cout << "fragile tile broken" << endl;
+					// cout << "fragile tile broken" << endl;
 				}
 				else
 					draw3DObject(frag);
@@ -1117,7 +1250,10 @@ void draw ()
 			case 5: // goal
 				grid[i].state = (occupied1 || occupied2);
 				if (occupied1 && occupied2)
-					cout << "goal" << endl;
+				{
+					game_progress = 1;
+					// cout << "goal" << endl;
+				}
 				break;
 			default:
 				break;
@@ -1127,7 +1263,9 @@ void draw ()
 
 	if (off_grid_1 || off_grid_2)
 	{
-		cout << "OFF GRID!" << endl;
+		piece.move(last_move);
+		game_progress = -1;
+		// cout << "OFF GRID!" << endl;
 	}
 
 	// TRIANGLE (DEFAULT)
@@ -1223,8 +1361,6 @@ void initGL (GLFWwindow* window, int width, int height)
 
 	piece.create();
 	createTiles();
-
-	init_grid();
 	
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
@@ -1257,6 +1393,8 @@ int main (int argc, char** argv)
 	initGL (window, width, height);
 
 	double last_update_time = glfwGetTime(), current_time;
+
+	init_game();
 
 	/* Draw in loop */
 	while (!glfwWindowShouldClose(window)) {
