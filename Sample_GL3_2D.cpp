@@ -208,7 +208,7 @@ float rectangle_rot_dir = 1;
 bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
 
-const float side = 0.5;
+const float side = 1;
 int game_progress; // -1 = lost; 0 = in progress, 1 = won
 bool take_action = false;
 int last_move = -1;
@@ -620,10 +620,6 @@ void toggle_bridge(int i, int j)
 	}
 }
 
-float eye_x = 4, eye_y = 4, eye_z = 4;
-float target_x = 0, target_y = 0, target_z = 0;
-float up_x = 0, up_y = 1, up_z = 0;
-
 // Eye - Location of camera. Don't change unless you are sure!!
 // glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
 glm::vec3 eye (4, 4, 4);
@@ -633,31 +629,75 @@ glm::vec3 target (0, 0, 0);
 glm::vec3 up (0, 1, 0);
 
 int view_mode = 0;
+float r;
+double theta; // angle against x on xy plane
+double phi; // angle against z axis
 void change_camera()
 {
 	// cout << view_mode << endl;
 	switch(view_mode) {
 		case 0: // Tower view
-			eye[0] = 4;
-			eye[1] = 4;
-			eye[2] = 4;
+			r = 8;
+			theta = 45; // angle against x on xy plane
+			phi = 45; // angle against z axis
+
+			eye[0] = -2;
+			eye[1] = 5;
+			eye[2] = 8;
+
+			target[0] = 0;
+			target[1] = 0;
+			target[2] = 0;
 			break;
 		case 1: // Top view
 			eye[0] = eye[2] = 0.1;
 			eye[1] = 4;
+
+			target[0] = 0;
+			target[1] = 0;
+			target[2] = 0;
 			break;
 		case 2: // Block view
 			eye[0] = piece.x;
-			eye[1] = piece.y;
+			eye[1] = piece.y + side*2;
 			eye[2] = piece.z;
 
-			target = piece.rotation * target;
+			for(int k = 0; k < grid.size(); k++)
+			{
+				if(grid[k].type == 5)
+				{
+					target[0] = grid[k].x;
+					target[1] = 0;
+					target[2] = grid[k].z;
+					break;
+				}
+			}
 			break;
-		case 3:
-			// Follow view
+		case 3: // Follow view
+			eye[0] = piece.x;
+			eye[1] = piece.y + side*2;
+			eye[2] = piece.z + side*4;
+
+			for(int k = 0; k < grid.size(); k++)
+			{
+				if(grid[k].type == 5)
+				{
+					target[0] = grid[k].x;
+					target[1] = 0;
+					target[2] = grid[k].z;
+					break;
+				}
+			}
 			break;
-		case 4:
-			// Helicopter view
+		case 4: // Helicopter view
+			// cout << theta << " " << phi << endl;
+			eye[0] = r*sin(phi)*cos(theta);
+			eye[1] = r*sin(phi)*sin(theta);
+			eye[2] = r*cos(phi);
+
+			target[0] = 0;
+			target[1] = 0;
+			target[2] = 0;
 			break;
 		default:
 			break;
@@ -737,6 +777,9 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 }
 
 /* Executed when a mouse button is pressed/released */
+bool pan_drag = false;
+float mouseX, mouseY;
+float mousePanX, mousePanY;
 void mouseButton (GLFWwindow* window, int button, int action, int mods)
 {
 	switch (button) {
@@ -746,14 +789,54 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods)
 			break;
 		case GLFW_MOUSE_BUTTON_RIGHT:
 			if (action == GLFW_RELEASE) {
-				rectangle_rot_dir *= -1;
-			}
+                rectangle_rot_dir *= -1;
+                if (pan_drag)
+                	pan_drag = false;
+            }
+            if (action == GLFW_PRESS)
+            {
+                pan_drag = true;
+                mousePanX = mouseX;
+				mousePanY = mouseY;
+            }
 			break;
 		default:
 			break;
 	}
 }
 
+void pan(int x, int y)
+{
+	// PAN += direction*0.1;
+	// cout << x << " " << y << endl;
+	theta -= y*0.01;
+	phi += x*0.01;
+}
+
+void mousePos (GLFWwindow* window, double x, double y)
+{
+    // x = (x - 350) * 4 / 350.0;
+    // x = (x + PAN)/ZOOM;
+
+    // y = (y - 350) * -4 / 350.0;
+    // y = (y + PAN)/ZOOM;
+
+    mouseX = x;
+    mouseY = y;
+    
+    // cout << x << " " << y << endl;
+}
+
+void zoom(int direction) // -1: out, 1: in
+{
+	r -= direction*1;
+    cout <<  "ZOOM: x" << r <<endl;
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    zoom(yoffset);
+}
 
 /* Executed when window is resized to 'width' and 'height' */
 /* Modify the bounds of the screen here in glm::ortho or Field of View in glm::Perspective */
@@ -775,10 +858,10 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	   gluPerspective (fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1, 500.0); */
 	// Store the projection matrix in a variable for future use
 	// Perspective projection for 3D views
-	// Matrices.projection = glm::perspective (fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1f, 500.0f);
+	Matrices.projection = glm::perspective (fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1f, 500.0f);
 
 	// Ortho projection for 2D views
-	Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
+	// Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
 
 VAO *triangle, *rectangle;
@@ -1171,6 +1254,18 @@ void draw ()
 
 	/* Render your scene */
 
+	// PANNING
+	if (pan_drag)
+	{
+		cout << mouseX << " " << mouseY << endl;
+		if(mouseX != mousePanX || mouseY != mousePanY)
+		{	
+			pan(mousePanX-mouseX, mousePanY-mouseY);
+			mousePanX = mouseX;
+			mousePanY = mouseY;
+		}
+	}
+
 	if(game_progress != 0)
 	{
 		if(piece.y < -8)
@@ -1225,10 +1320,11 @@ void draw ()
 				grid[i].state = (occupied1 || occupied2);
 				if (occupied1 && occupied2) // breaking condition
 				{
+					grid[i].show = 0;
 					off_grid_1 = off_grid_2 = true;
 					// cout << "fragile tile broken" << endl;
 				}
-				else
+				if(grid[i].show)
 					draw3DObject(frag);
 				break;
 			case 3: // bridge
@@ -1346,6 +1442,8 @@ GLFWwindow* initGLFW (int width, int height)
 
 	/* Register function to handle mouse click */
 	glfwSetMouseButtonCallback(window, mouseButton);  // mouse button clicks
+	glfwSetCursorPosCallback(window, mousePos);
+    glfwSetScrollCallback(window, scrollCallback);
 
 	return window;
 }
