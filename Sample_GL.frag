@@ -10,5 +10,5 @@ void main()
 {
     // Output color = color specified in the vertex shader,
     // interpolated between all 3 surrounding vertices of the triangle
-    color = fragColor;
+    color = 1*fragColor;
 }

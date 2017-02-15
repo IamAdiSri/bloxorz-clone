@@ -1257,7 +1257,7 @@ void draw ()
 	// PANNING
 	if (pan_drag)
 	{
-		cout << mouseX << " " << mouseY << endl;
+		// cout << mouseX << " " << mouseY << endl;
 		if(mouseX != mousePanX || mouseY != mousePanY)
 		{	
 			pan(mousePanX-mouseX, mousePanY-mouseY);
@@ -1413,6 +1413,7 @@ GLFWwindow* initGLFW (int width, int height)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_SAMPLES, 8);
 
 	window = glfwCreateWindow(width, height, "Sample OpenGL 3.3 Application", NULL, NULL);
 
@@ -1470,6 +1471,7 @@ void initGL (GLFWwindow* window, int width, int height)
 
 	// Background color of the scene
 	glClearColor (0.3f, 0.3f, 0.3f, 0.0f); // R, G, B, A
+	// glClearColor (0.0f, 0.0f, 0.0f, 0.0f); // R, G, B, A
 	glClearDepth (1.0f);
 
 	glEnable (GL_DEPTH_TEST);
