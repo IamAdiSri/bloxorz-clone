@@ -2,9 +2,8 @@
 
 ## Building
 
-1. `cd` into *game* folder
-2. Run `make` to compile
-3. Run `sample2D`
+1. Run `make` to compile
+2. Run `sample2D`
 
 ## Controls
 
